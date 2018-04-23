@@ -126,7 +126,7 @@ static ssize_t lunix_chrdev_read(struct file *filp, char __user *usrbuf, size_t 
 {
 	ssize_t ret;
 
-	struct lunix_sensor_struct *sensor;
+	struct lunix_sensor_struct       *sensor;
 	struct lunix_chrdev_state_struct *state;
 
 	state = filp->private_data;
@@ -169,7 +169,7 @@ static int lunix_chrdev_mmap(struct file *filp, struct vm_area_struct *vma)
 
 static struct file_operations lunix_chrdev_fops = 
 {
-        .owner          = THIS_MODULE,
+    .owner          = THIS_MODULE,
 	.open           = lunix_chrdev_open,
 	.release        = lunix_chrdev_release,
 	.read           = lunix_chrdev_read,
@@ -184,8 +184,8 @@ int lunix_chrdev_init(void)
 	 * a range of minor numbers (number of sensors * 8 measurements / sensor)
 	 * beginning with LINUX_CHRDEV_MAJOR:0
 	 */
-	int ret;
-	dev_t dev_no;
+	int          ret;
+	dev_t        dev_no;
 	unsigned int lunix_minor_cnt = lunix_sensor_cnt << 3;
 	
 	debug("initializing character device\n");
@@ -216,7 +216,7 @@ out:
 
 void lunix_chrdev_destroy(void)
 {
-	dev_t dev_no;
+	dev_t        dev_no;
 	unsigned int lunix_minor_cnt = lunix_sensor_cnt << 3;
 		
 	debug("entering\n");

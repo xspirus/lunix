@@ -30,15 +30,15 @@
  * Private state for an open character device node
  */
 struct lunix_chrdev_state_struct {
-	enum lunix_msr_enum type;
+	enum lunix_msr_enum         type;
 	struct lunix_sensor_struct *sensor;
 
 	/* A buffer used to hold cached textual info */
-	int buf_lim;
-	unsigned char buf_data[LUNIX_CHRDEV_BUFSZ];
-	uint32_t buf_timestamp;
+	int                         buf_lim;
+	unsigned char               buf_data[LUNIX_CHRDEV_BUFSZ];
+	uint32_t                    buf_timestamp;
 
-	struct semaphore lock;
+	struct semaphore            lock;
 
 	/*
 	 * Fixme: Any mode settings? e.g. blocking vs. non-blocking
@@ -48,8 +48,8 @@ struct lunix_chrdev_state_struct {
 /*
  * Function prototypes
  */
-int lunix_chrdev_init(void);
-void lunix_chrdev_destroy(void);
+int  lunix_chrdev_init    (void);
+void lunix_chrdev_destroy (void);
 
 #endif	/* __KERNEL__ */
 

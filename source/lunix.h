@@ -52,9 +52,9 @@ struct lunix_sensor_struct {
  * The default value for the maximum number of sensors supported
  */
 #define LUNIX_SENSOR_CNT			16
-extern int lunix_sensor_cnt;
-extern struct lunix_sensor_struct *lunix_sensors;
-extern struct lunix_protocol_state_struct lunix_protocol_state;
+extern int                                 lunix_sensor_cnt;
+extern struct lunix_sensor_struct         *lunix_sensors;
+extern struct lunix_protocol_state_struct  lunix_protocol_state;
 
 /*
  * Debugging
@@ -69,10 +69,9 @@ extern struct lunix_protocol_state_struct lunix_protocol_state;
 /*
  * Function prototypes
  */
-int lunix_sensor_init(struct lunix_sensor_struct *);
-void lunix_sensor_destroy(struct lunix_sensor_struct *);
-void lunix_sensor_update(struct lunix_sensor_struct *s,
-	uint16_t batt, uint16_t temp, uint16_t light);
+int  lunix_sensor_init    (struct lunix_sensor_struct *);
+void lunix_sensor_destroy (struct lunix_sensor_struct *);
+void lunix_sensor_update  (struct lunix_sensor_struct *s, uint16_t batt, uint16_t temp, uint16_t light);
 
 #else
 #include <inttypes.h>
