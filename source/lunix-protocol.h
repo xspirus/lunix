@@ -43,14 +43,14 @@
  */
 struct lunix_protocol_state_struct
 {
-	int state;                      /* The current state of the protocol state machine */
+	int state;                            /* The current state of the protocol state machine          */
 	int bytes_read;	
 	int bytes_to_read;
 
-	int pos;                        /* Current pos in the XMesh Packet */
-	unsigned char next_is_special;  /* The next character to be received is a special character */
-	unsigned char payload_length;   /* The length of the payload of the received packet */
-	unsigned char packet[MAX_PACKET_LEN]; /* The XMesh packet being received */
+	int pos;                              /* Current pos in the XMesh Packet                          */
+	unsigned char next_is_special;        /* The next character to be received is a special character */
+	unsigned char payload_length;         /* The length of the payload of the received packet         */
+	unsigned char packet[MAX_PACKET_LEN]; /* The XMesh packet being received                          */
 };
 
 /*
