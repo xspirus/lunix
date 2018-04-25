@@ -28,6 +28,7 @@
 #define LUNIX_MSR_MAGIC 0xF00DF00D
 
 enum lunix_msr_enum { BATT = 0, TEMP, LIGHT, N_LUNIX_MSR };
+
 struct lunix_sensor_struct {
 	/*
 	 * A number of pages, one for each measurement.
@@ -51,7 +52,7 @@ struct lunix_sensor_struct {
 /*
  * The default value for the maximum number of sensors supported
  */
-#define LUNIX_SENSOR_CNT			16
+#define LUNIX_SENSOR_CNT			       16
 extern int                                 lunix_sensor_cnt;
 extern struct lunix_sensor_struct         *lunix_sensors;
 extern struct lunix_protocol_state_struct  lunix_protocol_state;
