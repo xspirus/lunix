@@ -4,7 +4,8 @@
  * Implementation of character devices
  * for Lunix:TNG
  *
- * < Your name here >
+ * Spiros Dontas
+ * Lefteris Kalafatis
  *
  */
 
@@ -43,6 +44,8 @@ static int lunix_chrdev_state_needs_refresh(struct lunix_chrdev_state_struct *st
 	
 	WARN_ON ( !(sensor = state->sensor));
 	/* ? */
+    if ( sensor->msr_data[state->type]->last_update != state->buf_timestamp)
+        return 1;
 
 	/* The following return is bogus, just for the stub to compile */
 	return 0; /* ? */
@@ -64,12 +67,19 @@ static int lunix_chrdev_state_update(struct lunix_chrdev_state_struct *state)
 	 * spinlock for as little as possible.
 	 */
 	/* ? */
+    sensor = state->sensor;
+    spin_lock(&sensor->lock);
+    uint32_t data = sensor->msr_data[state->type]->values[0];
+    uint32_t timestamp = sensor->msr_data[state->type]->last_update;
+    spin_unlock(&sensor->lock);
 	/* Why use spinlocks? See LDD3, p. 119 */
 
 	/*
 	 * Any new data available?
 	 */
 	/* ? */
+    if ( !lunix_chrdev_state_needs_refresh(state) )
+        return -EAGAIN;
 
 	/*
 	 * Now we can take our time to format them,
@@ -77,6 +87,8 @@ static int lunix_chrdev_state_update(struct lunix_chrdev_state_struct *state)
 	 */
 
 	/* ? */
+    snprintf(state->buf_data, LUNIX_CHRDEV_BUFSZ, "%ld", /* do something with data */);
+    state->buf_timestamp = timestamp;
 
 	debug("leaving\n");
 	return 0;
@@ -92,19 +104,32 @@ static int lunix_chrdev_open(struct inode *inode, struct file *filp)
 	/* Declarations */
 	/* ? */
 	int ret;
+    /* Our Declarations */
+    struct lunix_chrdev_state_struct *dev; /* Device Information */
 
 	debug("entering\n");
 	ret = -ENODEV;
 	if ((ret = nonseekable_open(inode, filp)) < 0)
 		goto out;
 
+    dev = container_of(inode->i_cdev, struct lunix_chrdev_state_struct, cdev);
+    if ( dev != NULL )
+        ret = 0;
+
 	/*
 	 * Associate this open file with the relevant sensor based on
 	 * the minor number of the device node [/dev/sensor<NO>-<TYPE>]
 	 */
+    unsigned int minor = iminor(inode);
+    unsigned int NO    = minor / 8;
+    unsigned int TYPE  = minor % 8;
+
+    dev->type   = TYPE;
+    dev->sensor = &lunix_sensors[NO];
 	
 	/* Allocate a new Lunix character device private state structure */
 	/* ? */
+    filp->private_data = dev;
 out:
 	debug("leaving, with ret = %d\n", ret);
 	return ret;
@@ -136,6 +161,8 @@ static ssize_t lunix_chrdev_read(struct file *filp, char __user *usrbuf, size_t 
 	WARN_ON(!sensor);
 
 	/* Lock? */
+    if ( down_interruptible(&state->lock) )
+        return -ERESTARTSYS;
 	/*
 	 * If the cached character device state needs to be
 	 * updated by actual sensor data (i.e. we need to report
@@ -144,6 +171,9 @@ static ssize_t lunix_chrdev_read(struct file *filp, char __user *usrbuf, size_t 
 	if (*f_pos == 0) {
 		while (lunix_chrdev_state_update(state) == -EAGAIN) {
 			/* ? */
+            up(&state->lock);
+            if ( down_interruptible(&state->lock) )
+                return -ERESTARTSYS;
 			/* The process needs to sleep */
 			/* See LDD3, page 153 for a hint */
 		}
@@ -159,6 +189,7 @@ static ssize_t lunix_chrdev_read(struct file *filp, char __user *usrbuf, size_t 
 	/* ? */
 out:
 	/* Unlock? */
+    up(&state->lock);
 	return ret;
 }
 
