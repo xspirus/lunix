@@ -264,7 +264,7 @@ int lunix_chrdev_init(void)
 	}	
 	/* ? */
 	/* cdev_add? */
-    ret = cdev_add(&lunix_chrdev_cdev, dev_no, 1);
+    ret = cdev_add(&lunix_chrdev_cdev, dev_no, lunix_minor_cnt);
 	if (ret < 0) {
 		debug("failed to add character device\n");
 		goto out_with_chrdev_region;
