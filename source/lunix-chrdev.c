@@ -128,7 +128,8 @@ static int lunix_chrdev_open(struct inode *inode, struct file *filp)
 	if ((ret = nonseekable_open(inode, filp)) < 0)
 		goto out;
 
-    dev = container_of(inode->i_cdev, struct lunix_chrdev_state_struct, cdev);
+    /* dev = container_of(inode->i_cdev, struct lunix_chrdev_state_struct, cdev); */
+    dev = (struct lunix_chrdev_state_struct *)kzalloc(sizeof(struct lunix_chrdev_state_struct), GFP_KERNEL);
     if ( dev != NULL )
         ret = 0;
 
@@ -256,7 +257,7 @@ int lunix_chrdev_init(void)
 	dev_no = MKDEV(LUNIX_CHRDEV_MAJOR, 0);
 	/* ? */
 	/* register_chrdev_region? */
-    ret = register_chrdev_region(dev_no, lunix_minor_cnt);
+    ret = 0;
 	if (ret < 0) {
 		debug("failed to register region, ret = %d\n", ret);
 		goto out;
