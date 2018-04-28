@@ -171,8 +171,6 @@ static ssize_t lunix_chrdev_read(struct file *filp, char __user *usrbuf, size_t 
 	ssize_t ret;
     size_t to_write;
 
-    int refresh;
-
 	struct lunix_sensor_struct       *sensor;
 	struct lunix_chrdev_state_struct *state;
 
@@ -199,9 +197,10 @@ static ssize_t lunix_chrdev_read(struct file *filp, char __user *usrbuf, size_t 
 			/* ? */
             debug("no update");
             up(&state->lock);
-            refresh = lunix_chrdev_state_needs_refresh(state);
-            if ( wait_event_interruptible(sensor->wq, refresh == 1) )
+            debug("sleeping");
+            if ( wait_event_interruptible(sensor->wq, lunix_chrdev_state_needs_refresh(state) == 1) )
                 return -ERESTARTSYS;
+            debug("woken up");
             if ( down_interruptible(&state->lock) )
                 return -ERESTARTSYS;
 			/* The process needs to sleep */
