@@ -59,6 +59,8 @@ static int lunix_chrdev_state_needs_refresh(struct lunix_chrdev_state_struct *st
 static int lunix_chrdev_state_update(struct lunix_chrdev_state_struct *state)
 {
 	struct lunix_sensor_struct *sensor;
+    uint16_t data;
+    uint32_t timestamp;
 	
 	debug("leaving\n");
 
@@ -69,8 +71,8 @@ static int lunix_chrdev_state_update(struct lunix_chrdev_state_struct *state)
 	/* ? */
     sensor = state->sensor;
     spin_lock(&sensor->lock);
-    uint16_t data = (uint16_t) sensor->msr_data[state->type]->values[0];
-    uint32_t timestamp = sensor->msr_data[state->type]->last_update;
+    data = (uint16_t) sensor->msr_data[state->type]->values[0];
+    timestamp = sensor->msr_data[state->type]->last_update;
     spin_unlock(&sensor->lock);
 	/* Why use spinlocks? See LDD3, p. 119 */
 
@@ -95,8 +97,9 @@ static int lunix_chrdev_state_update(struct lunix_chrdev_state_struct *state)
     } else {
         fixed = lookup_light[data];
     }
-    int integer = fixed / 1000;
-    int decadic = fixed % 1000;
+    int integer, decadic;
+    integer = fixed / 1000;
+    decadic = fixed % 1000;
     state->written = snprintf(state->buf_data, LUNIX_CHRDEV_BUFSZ, "%d.%03d", integer, decadic);
     state->buf_timestamp = timestamp;
 
@@ -116,8 +119,11 @@ static int lunix_chrdev_open(struct inode *inode, struct file *filp)
 	int ret;
     /* Our Declarations */
     struct lunix_chrdev_state_struct *dev; /* Device Information */
-
-	debug("entering\n");
+    unsigned int minor;
+    unsigned int NO;   
+	unsigned int TYPE;
+    
+    debug("entering\n");
 	ret = -ENODEV;
 	if ((ret = nonseekable_open(inode, filp)) < 0)
 		goto out;
@@ -130,9 +136,9 @@ static int lunix_chrdev_open(struct inode *inode, struct file *filp)
 	 * Associate this open file with the relevant sensor based on
 	 * the minor number of the device node [/dev/sensor<NO>-<TYPE>]
 	 */
-    unsigned int minor = iminor(inode);
-    unsigned int NO    = minor / 8;
-    unsigned int TYPE  = minor % 8;
+    minor = iminor(inode);
+    NO    = minor / 8;
+    TYPE  = minor % 8;
 
     dev->type   = TYPE;
     dev->sensor = &lunix_sensors[NO];
@@ -196,12 +202,12 @@ static ssize_t lunix_chrdev_read(struct file *filp, char __user *usrbuf, size_t 
 	
 	/* Determine the number of cached bytes to copy to userspace */
 	/* ? */
-    char     *to_copy  = state->buf_data + *f_pos;
-    uint32_t  to_write = state->written - *f_pos;
+    ssize_t        to_write;
+    to_write = state->written - (ssize_t)*f_pos;
 
     ret = min(cnt, to_write);
 
-    if ( copy_to_user(usrbuf, to_copy, ret) ) {
+    if ( copy_to_user(usrbuf, state->buf_data + (ssize_t)*f_pos, ret) ) {
         up(&state->lock);
         return -EFAULT;
     }
