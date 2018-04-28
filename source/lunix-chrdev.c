@@ -61,6 +61,8 @@ static int lunix_chrdev_state_update(struct lunix_chrdev_state_struct *state)
 	struct lunix_sensor_struct *sensor;
     uint16_t data;
     uint32_t timestamp;
+    long fixed;
+    int integer, decadic;
 	
 	debug("leaving\n");
 
@@ -89,7 +91,6 @@ static int lunix_chrdev_state_update(struct lunix_chrdev_state_struct *state)
 	 */
 
 	/* ? */
-    long fixed;
     if ( state->type == BATT ) {
         fixed = lookup_voltage[data];
     } else if ( state->type == TEMP ) {
@@ -97,7 +98,6 @@ static int lunix_chrdev_state_update(struct lunix_chrdev_state_struct *state)
     } else {
         fixed = lookup_light[data];
     }
-    int integer, decadic;
     integer = fixed / 1000;
     decadic = fixed % 1000;
     state->written = snprintf(state->buf_data, LUNIX_CHRDEV_BUFSZ, "%d.%03d", integer, decadic);
@@ -166,6 +166,9 @@ static long lunix_chrdev_ioctl(struct file *filp, unsigned int cmd, unsigned lon
 static ssize_t lunix_chrdev_read(struct file *filp, char __user *usrbuf, size_t cnt, loff_t *f_pos)
 {
 	ssize_t ret;
+    size_t to_write;
+
+    int refresh;
 
 	struct lunix_sensor_struct       *sensor;
 	struct lunix_chrdev_state_struct *state;
@@ -188,7 +191,8 @@ static ssize_t lunix_chrdev_read(struct file *filp, char __user *usrbuf, size_t 
 		while (lunix_chrdev_state_update(state) == -EAGAIN) {
 			/* ? */
             up(&state->lock);
-            if ( wait_event_interruptible(&sensor->wq, lunix_chrdev_state_needs_refresh(state)) )
+            refresh = lunix_chrdev_state_needs_refresh(state);
+            if ( wait_event_interruptible(&sensor->wq, refresh == 1) )
                 return -ERESTARTSYS;
             if ( down_interruptible(&state->lock) )
                 return -ERESTARTSYS;
@@ -202,8 +206,7 @@ static ssize_t lunix_chrdev_read(struct file *filp, char __user *usrbuf, size_t 
 	
 	/* Determine the number of cached bytes to copy to userspace */
 	/* ? */
-    ssize_t        to_write;
-    to_write = state->written - (ssize_t)*f_pos;
+    to_write = state->written - (size_t)*f_pos;
 
     ret = min(cnt, to_write);
 
