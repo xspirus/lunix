@@ -143,7 +143,7 @@ static int lunix_chrdev_open(struct inode *inode, struct file *filp)
 
     dev->type   = TYPE;
     dev->sensor = &lunix_sensors[NO];
-    sema_init(&dev->lock);
+    sema_init(&dev->lock, 1);
 	
 	/* Allocate a new Lunix character device private state structure */
 	/* ? */
@@ -182,6 +182,7 @@ static ssize_t lunix_chrdev_read(struct file *filp, char __user *usrbuf, size_t 
 	WARN_ON(!sensor);
 
 	/* Lock? */
+    debug("trying to lock the semaphore");
     if ( down_interruptible(&state->lock) )
         return -ERESTARTSYS;
 	/*
@@ -189,6 +190,7 @@ static ssize_t lunix_chrdev_read(struct file *filp, char __user *usrbuf, size_t 
 	 * updated by actual sensor data (i.e. we need to report
 	 * on a "fresh" measurement, do so
 	 */
+    debug("checking the f_pos");
 	if (*f_pos == 0) {
 		while (lunix_chrdev_state_update(state) == -EAGAIN) {
 			/* ? */
