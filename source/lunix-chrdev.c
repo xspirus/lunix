@@ -128,7 +128,8 @@ static int lunix_chrdev_open(struct inode *inode, struct file *filp)
 	if ((ret = nonseekable_open(inode, filp)) < 0)
 		goto out;
 
-    dev = container_of(inode->i_cdev, struct lunix_chrdev_state_struct, cdev);
+    /* dev = container_of(inode->i_cdev, struct lunix_chrdev_state_struct, cdev); */
+    dev = (struct lunix_chrdev_state_struct *)malloc(sizeof(struct lunix_chrdev_state_struct));
     if ( dev != NULL )
         ret = 0;
 
@@ -192,7 +193,7 @@ static ssize_t lunix_chrdev_read(struct file *filp, char __user *usrbuf, size_t 
 			/* ? */
             up(&state->lock);
             refresh = lunix_chrdev_state_needs_refresh(state);
-            if ( wait_event_interruptible(&sensor->wq, refresh == 1) )
+            if ( wait_event_interruptible(sensor->wq, refresh == 1) )
                 return -ERESTARTSYS;
             if ( down_interruptible(&state->lock) )
                 return -ERESTARTSYS;
