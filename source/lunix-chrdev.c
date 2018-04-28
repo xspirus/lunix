@@ -48,6 +48,7 @@ static int lunix_chrdev_state_needs_refresh(struct lunix_chrdev_state_struct *st
         return 1;
 
 	/* The following return is bogus, just for the stub to compile */
+    debug("leaving with ret = 0");
 	return 0; /* ? */
 }
 
@@ -64,7 +65,7 @@ static int lunix_chrdev_state_update(struct lunix_chrdev_state_struct *state)
     long fixed;
     int integer, decadic;
 	
-	debug("leaving\n");
+	debug("entering\n");
 
 	/*
 	 * Grab the raw data quickly, hold the
@@ -103,7 +104,7 @@ static int lunix_chrdev_state_update(struct lunix_chrdev_state_struct *state)
     state->written = snprintf(state->buf_data, LUNIX_CHRDEV_BUFSZ, "%d.%03d", integer, decadic);
     state->buf_timestamp = timestamp;
 
-	debug("leaving\n");
+	debug("leaving with ret = 0\n");
 	return 0;
 }
 
@@ -190,10 +191,11 @@ static ssize_t lunix_chrdev_read(struct file *filp, char __user *usrbuf, size_t 
 	 * updated by actual sensor data (i.e. we need to report
 	 * on a "fresh" measurement, do so
 	 */
-    debug("checking the f_pos");
+    debug("checking the f_pos = %ld", *f_pos);
 	if (*f_pos == 0) {
 		while (lunix_chrdev_state_update(state) == -EAGAIN) {
 			/* ? */
+            debug("no update");
             up(&state->lock);
             refresh = lunix_chrdev_state_needs_refresh(state);
             if ( wait_event_interruptible(sensor->wq, refresh == 1) )
