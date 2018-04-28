@@ -101,7 +101,7 @@ static int lunix_chrdev_state_update(struct lunix_chrdev_state_struct *state)
     }
     integer = fixed / 1000;
     decadic = fixed % 1000;
-    state->written = snprintf(state->buf_data, LUNIX_CHRDEV_BUFSZ, "%d.%03d", integer, decadic);
+    state->written = snprintf(state->buf_data, LUNIX_CHRDEV_BUFSZ, "%d.%03d\n", integer, decadic);
     state->buf_timestamp = timestamp;
 
 	debug("leaving with ret = 0\n");
