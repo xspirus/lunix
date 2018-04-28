@@ -43,6 +43,7 @@ struct lunix_chrdev_state_struct {
 	/*
 	 * Fixme: Any mode settings? e.g. blocking vs. non-blocking
 	 */
+    uint32_t                    written;
 };
 
 /*

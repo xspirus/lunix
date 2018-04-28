@@ -69,7 +69,7 @@ static int lunix_chrdev_state_update(struct lunix_chrdev_state_struct *state)
 	/* ? */
     sensor = state->sensor;
     spin_lock(&sensor->lock);
-    uint32_t data = sensor->msr_data[state->type]->values[0];
+    uint16_t data = (uint16_t) sensor->msr_data[state->type]->values[0];
     uint32_t timestamp = sensor->msr_data[state->type]->last_update;
     spin_unlock(&sensor->lock);
 	/* Why use spinlocks? See LDD3, p. 119 */
@@ -87,7 +87,17 @@ static int lunix_chrdev_state_update(struct lunix_chrdev_state_struct *state)
 	 */
 
 	/* ? */
-    snprintf(state->buf_data, LUNIX_CHRDEV_BUFSZ, "%ld", /* do something with data */);
+    long fixed;
+    if ( state->type == BATT ) {
+        fixed = lookup_voltage[data];
+    } else if ( state->type == TEMP ) {
+        fixed = lookup_temperature[data];
+    } else {
+        fixed = lookup_light[data];
+    }
+    int integer = fixed / 1000;
+    int decadic = fixed % 1000;
+    state->written = snprintf(state->buf_data, LUNIX_CHRDEV_BUFSZ, "%d.%03d", integer, decadic);
     state->buf_timestamp = timestamp;
 
 	debug("leaving\n");
@@ -172,6 +182,8 @@ static ssize_t lunix_chrdev_read(struct file *filp, char __user *usrbuf, size_t 
 		while (lunix_chrdev_state_update(state) == -EAGAIN) {
 			/* ? */
             up(&state->lock);
+            if ( wait_event_interruptible(&sensor->wq, lunix_chrdev_state_needs_refresh(state)) )
+                return -ERESTARTSYS;
             if ( down_interruptible(&state->lock) )
                 return -ERESTARTSYS;
 			/* The process needs to sleep */
@@ -184,6 +196,15 @@ static ssize_t lunix_chrdev_read(struct file *filp, char __user *usrbuf, size_t 
 	
 	/* Determine the number of cached bytes to copy to userspace */
 	/* ? */
+    char     *to_copy  = state->buf_data + *f_pos;
+    uint32_t  to_write = state->written - *f_pos;
+
+    ret = min(cnt, to_write);
+
+    if ( copy_to_user(usrbuf, to_copy, ret) ) {
+        up(&state->lock);
+        return -EFAULT;
+    }
 
 	/* Auto-rewind on EOF mode? */
 	/* ? */
