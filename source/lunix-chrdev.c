@@ -143,6 +143,7 @@ static int lunix_chrdev_open(struct inode *inode, struct file *filp)
 
     dev->type   = TYPE;
     dev->sensor = &lunix_sensors[NO];
+    sema_init(&dev->lock);
 	
 	/* Allocate a new Lunix character device private state structure */
 	/* ? */
