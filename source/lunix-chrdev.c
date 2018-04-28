@@ -128,8 +128,8 @@ static int lunix_chrdev_open(struct inode *inode, struct file *filp)
 	if ((ret = nonseekable_open(inode, filp)) < 0)
 		goto out;
 
-    /* dev = container_of(inode->i_cdev, struct lunix_chrdev_state_struct, cdev); */
-    dev = (struct lunix_chrdev_state_struct *)kzalloc(sizeof(struct lunix_chrdev_state_struct), GFP_KERNEL);
+    lunix_chrdev_init();
+    dev = container_of(inode->i_cdev, struct lunix_chrdev_state_struct, cdev);
     if ( dev != NULL )
         ret = 0;
 
