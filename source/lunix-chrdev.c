@@ -182,6 +182,8 @@ static ssize_t lunix_chrdev_read(struct file *filp, char __user *usrbuf, size_t 
 	sensor = state->sensor;
 	WARN_ON(!sensor);
 
+    debug("entering with cnt = %d", cnt);
+
 	/* Lock? */
     debug("trying to lock the semaphore");
     if ( down_interruptible(&state->lock) )
@@ -226,6 +228,7 @@ static ssize_t lunix_chrdev_read(struct file *filp, char __user *usrbuf, size_t 
 out:
 	/* Unlock? */
     up(&state->lock);
+    debug("leaving with ret = %d", ret);
 	return ret;
 }
 
