@@ -161,7 +161,11 @@ static int lunix_chrdev_release(struct inode *inode, struct file *filp)
 
     state = filp->private_data;
 
+    debug("freeing chrdev struct");
+
     kzfree(state);
+
+    debug("freed");
 
     filp->private_data = NULL;
 
