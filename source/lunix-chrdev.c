@@ -65,6 +65,7 @@ static int lunix_chrdev_state_update(struct lunix_chrdev_state_struct *state)
     long                        fixed;
     int                         integer, decadic;
     char                        op;
+    unsigned long               flags;
 
     debug("entering\n");
 
@@ -74,10 +75,10 @@ static int lunix_chrdev_state_update(struct lunix_chrdev_state_struct *state)
      */
     /* ? */
     sensor = state->sensor;
-    spin_lock(&sensor->lock);
+    spin_lock_irqsave(&sensor->lock, flags);
     data      = (uint16_t) sensor->msr_data[state->type]->values[0];
     timestamp = sensor->msr_data[state->type]->last_update;
-    spin_unlock(&sensor->lock);
+    spin_unlock_irqrestore(&sensor->lock, flags);
     /* Why use spinlocks? See LDD3, p. 119 */
 
     /*
@@ -239,6 +240,12 @@ static ssize_t lunix_chrdev_read(struct file *filp, char __user *usrbuf, size_t 
 
     ret = min(cnt, to_write);
 
+    if ( ret == to_write ) {
+        *f_pos = 0;
+    } else {
+        *f_pos = (loff_t) ret;
+    }
+
     if ( copy_to_user(usrbuf, state->buf_data + (ssize_t)*f_pos, ret) ) {
         up(&state->lock);
         return -EFAULT;
@@ -286,7 +293,7 @@ int lunix_chrdev_init(void)
     dev_no = MKDEV(LUNIX_CHRDEV_MAJOR, 0);
     /* ? */
     /* register_chrdev_region? */
-    ret = 0;
+    ret = register_chrdev_region(dev_no, 1, "lunix");
     if (ret < 0) {
         debug("failed to register region, ret = %d\n", ret);
         goto out;
